@@ -1,0 +1,42 @@
+# Archivos de desarrollo
+.next/
+node_modules/
+.env*
+.git/
+.gitignore
+
+# Archivos de build
+.turbo/
+.vercel/
+tsconfig.tsbuildinfo
+
+# Archivos de configuración de desarrollo
+.eslintrc.json
+jest.config.js
+
+# Archivos temporales
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# Archivos de documentación de desarrollo
+docs/
+examples/
+lib/
+
+# Archivos específicos de desarrollo
+scripts/
+MIGRATION.md
+docker-compose.yml
+Dockerfile
+
+# Mantener solo lo esencial para la librería
+# src/ - código fuente
+# prisma/ - schema de base de datos
+# dist/ - estilos compilados
+# README.md - documentación
+# package.json - configuración
+# next.config.mjs - configuración Next.js
+# tailwind.config.js - configuración Tailwind
+# tsconfig.json - configuración TypeScript
