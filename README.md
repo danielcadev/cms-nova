@@ -1,39 +1,42 @@
-# 🚀 CMS Nova - Publicado en NPM
+# 🚀 CMS Nova - Modern Headless CMS
 
-**Sistema de administración modular con diseño estilo Notion**
+**Modular content management system with Notion-style design**
 
-CMS Nova es un CMS completo y moderno que te permite gestionar usuarios, contenido dinámico, y más. Con una interfaz limpia estilo Notion y funcionalidades avanzadas listas para producción.
+CMS Nova is a complete and modern CMS that allows you to manage users, dynamic content, and more. With a clean Notion-style interface and advanced production-ready features.
 
-## 🎯 **ESTADO: PUBLICADO EN NPM** ✅
+## 🎯 **STATUS: PUBLISHED ON NPM** ✅
 
-[![NPM Version](https://img.shields.io/npm/v/@danielcadev/cms-nova?style=flat-square)](https://www.npmjs.com/package/@danielcadev/cms-nova)
-[![NPM Downloads](https://img.shields.io/npm/dm/@danielcadev/cms-nova?style=flat-square)](https://www.npmjs.com/package/@danielcadev/cms-nova)
+[![NPM Version](https://img.shields.io/npm/v/@danielcadev/cms-nova?style=flat-square&color=blue)](https://www.npmjs.com/package/@danielcadev/cms-nova)
+[![NPM Downloads](https://img.shields.io/npm/dm/@danielcadev/cms-nova?style=flat-square&color=green)](https://www.npmjs.com/package/@danielcadev/cms-nova)
+[![License](https://img.shields.io/npm/l/@danielcadev/cms-nova?style=flat-square&color=orange)](https://github.com/danielcadev/cms-nova/blob/main/LICENSE)
+[![GitHub Stars](https://img.shields.io/github/stars/danielcadev/cms-nova?style=flat-square&color=yellow)](https://github.com/danielcadev/cms-nova)
 
-## ✨ Características Implementadas
+## ✨ **Key Features**
 
-- ✅ **Autenticación completa** con Better Auth
-- ✅ **Gestión de usuarios** con roles y permisos
-- ✅ **🎨 Constructor de plantillas visual** - drag & drop sin programar
-- ✅ **CMS Headless flexible** - crea tipos de contenido dinámicos
-- ✅ **Sistema de templates predefinidos** (planes turísticos, etc.)
-- ✅ **UI estilo Notion** - moderna y limpia (no iOS 26)
-- ✅ **Dashboard administrativo** con estadísticas
-- ✅ **API REST completa** para integración
-- ✅ **TypeScript** - completamente tipado
-- ✅ **Base de datos PostgreSQL** con Prisma
-- ✅ **Deployment ready** - Docker, Vercel, VPS
+- ✅ **Complete Authentication** with Better Auth
+- ✅ **User Management** with roles and permissions
+- ✅ **🎨 Visual Template Builder** - drag & drop without coding
+- ✅ **Flexible Headless CMS** - create dynamic content types
+- ✅ **Predefined Template System** (tourism plans, etc.)
+- ✅ **☁️ AWS S3 File Upload** - configuration from plugins panel
+- ✅ **Notion-style UI** - modern and clean
+- ✅ **Administrative Dashboard** with statistics
+- ✅ **Complete REST API** for integration
+- ✅ **TypeScript** - fully typed
+- ✅ **PostgreSQL Database** with Prisma
+- ✅ **Deployment Ready** - Docker, Vercel, VPS
 
-## 📦 **Instalación Rápida desde NPM**
+## 📦 **Quick Installation from NPM**
 
 ```bash
-# Instalar CMS Nova
+# Install CMS Nova
 npm install @danielcadev/cms-nova@beta
 
-# Instalar dependencias
+# Install dependencies
 npm install better-auth @prisma/client prisma next react react-dom
 ```
 
-## 🚀 **Uso Básico**
+## 🚀 **Basic Usage**
 
 ```tsx
 // app/admin/layout.tsx
@@ -56,64 +59,64 @@ export default function AdminPage() {
 }
 ```
 
-## 🛠️ **Instalación Completa (Desarrollo)**
+## 🛠️ **Full Installation (Development)**
 
-### Opción 1: Clonar Repositorio
+### Option 1: Clone Repository
 ```bash
 git clone https://github.com/danielcadev/cms-nova.git
 cd cms-nova
 npm install
 cp .env.example .env
-# Configurar .env con tus datos
+# Configure .env with your data
 npm run dev
 ```
 
-## 🎨 **Constructor Visual de Plantillas**
+## 🎨 **Visual Template Builder**
 
-Los usuarios pueden crear sus propias plantillas **sin programar**:
+Users can create their own templates **without coding**:
 
-### Interfaz Drag & Drop
-- 📝 Arrastra campos desde la paleta
-- 🔄 Reordena campos fácilmente
-- 👀 Vista previa en tiempo real
-- ⚙️ Configuración avanzada por campo
+### Drag & Drop Interface
+- 📝 Drag fields from palette
+- 🔄 Reorder fields easily
+- 👀 Real-time preview
+- ⚙️ Advanced field configuration
 
-### Tipos de Campo Disponibles
-- **Texto Corto/Largo** - Títulos, descripciones
-- **Número** - Precios, cantidades, calificaciones
-- **Sí/No** - Opciones booleanas
-- **Fecha** - Fechas y horarios
-- **Media** - Imágenes y archivos
+### Available Field Types
+- **Short/Long Text** - Titles, descriptions
+- **Number** - Prices, quantities, ratings
+- **Yes/No** - Boolean options
+- **Date** - Dates and times
+- **Media** - Images and files
 
-## 🌐 **Disponible en NPM**
+## 🌐 **Available on NPM**
 
-**Paquete:** [`@danielcadev/cms-nova`](https://www.npmjs.com/package/@danielcadev/cms-nova)
+**Package:** [`@danielcadev/cms-nova`](https://www.npmjs.com/package/@danielcadev/cms-nova)
 
 ```bash
-# Instalar versión beta
+# Install beta version
 npm install @danielcadev/cms-nova@beta
 
-# Ver todas las versiones
+# View all versions
 npm view @danielcadev/cms-nova versions --json
 ```
 
-## 📚 **Documentación Completa**
+## 📚 **Complete Documentation**
 
-📖 **[Ver guía completa de creación de plantillas](docs/CREATE-TEMPLATES.md)**
-📖 **[Ver guía de integración](INTEGRATION.md)**
-📖 **[Ver guía de deployment](DEPLOYMENT.md)**
-📖 **[Ver demo del constructor visual](examples/template-builder-demo.md)**
+📖 **[Template Creation Guide](docs/CREATE-TEMPLATES.md)**
+📖 **[Integration Guide](INTEGRATION.md)**
+📖 **[Deployment Guide](DEPLOYMENT.md)**
+📖 **[Visual Builder Demo](examples/template-builder-demo.md)**
 
-## 🎯 Ejemplos de Uso por Industria
+## 🎯 Industry Use Cases
 
-### 🏖️ Agencia de Viajes
+### 🏖️ Travel Agency
 ```tsx
 const travelConfig = {
   ui: { title: 'Travel Admin', primaryColor: '#0ea5e9' },
   features: {
     users: true,
-    plans: true,        // ✅ Templates de planes turísticos
-    contentTypes: true  // Destinos, hoteles, actividades
+    plans: true,        // ✅ Tourism plan templates
+    contentTypes: true  // Destinations, hotels, activities
   }
 };
 ```
@@ -124,463 +127,133 @@ const ecommerceConfig = {
   ui: { title: 'Store Admin', primaryColor: '#10b981' },
   features: {
     users: true,
-    contentTypes: true  // Productos, categorías, marcas
+    contentTypes: true  // Products, categories, brands
   }
 };
 ```
 
-### 📰 Blog/Revista
+### 📰 Blog/Magazine
 ```tsx
 const blogConfig = {
   ui: { title: 'Editorial Admin', primaryColor: '#8b5cf6' },
   features: {
     users: true,
-    contentTypes: true  // Posts, categorías, autores
+    contentTypes: true  // Posts, categories, authors
   }
 };
 ```
 
-### 🏥 Clínica/Hospital
+### 🏥 Clinic/Hospital
 ```tsx
 const clinicConfig = {
   ui: { title: 'Clinic Admin', primaryColor: '#ef4444' },
   features: {
     users: true,
-    contentTypes: true  // Doctores, servicios, citas
+    contentTypes: true  // Doctors, services, appointments
   }
 };
 ```
 
-## 🎯 Uso Básico
+## ⚙️ **Configuration**
 
-### Dashboard Principal
-```typescript
-import { AdminDashboard } from '@nova/cms-admin';
-
-// Dashboard con estadísticas automáticas
-<AdminDashboard />
-```
-
-### Gestión de Usuarios
-```typescript
-import { UsersManager } from '@nova/cms-admin';
-
-// Sistema completo de usuarios
-<UsersManager />
-```
-
-### Gestión de Planes/Contenido
-```typescript
-import { PlansManager } from '@nova/cms-admin';
-
-// CRUD completo para planes
-<PlansManager />
-```
-
-## ⚙️ Configuración Avanzada
-
-### Personalizar UI
-```typescript
-const config = {
-  ui: {
-    theme: 'dark',
-    primaryColor: '#10b981',
-    logo: '/mi-logo.png',
-    title: 'Mi CMS Personalizado',
-    customCSS: `
-      .admin-sidebar { background: linear-gradient(...); }
-    `
-  }
-};
-```
-
-### Roles y Permisos Personalizados
-```typescript
-const config = {
-  auth: {
-    adminRoles: ['ADMIN', 'SUPER_ADMIN', 'EDITOR'],
-  },
-  permissions: {
-    customRoles: ['EDITOR', 'VIEWER'],
-    permissions: {
-      'EDITOR': ['users.read', 'plans.write'],
-      'VIEWER': ['plans.read']
-    }
-  }
-};
-```
-
-### Features Opcionales
-```typescript
-const config = {
-  features: {
-    users: true,
-    plans: true,
-    analytics: false,
-    fileManager: true,
-    backup: true
-  }
-};
-```
-
-## 🔧 Componentes Individuales
-
-Si prefieres usar componentes específicos:
-
-```typescript
-import { 
-  UserTable, 
-  UserForm, 
-  PlanForm,
-  useNovaAuth,
-  useUsers 
-} from '@nova/cms-admin';
-
-function MiComponentePersonalizado() {
-  const { user } = useNovaAuth();
-  const { users, createUser } = useUsers();
-  
-  return (
-    <div>
-      <UserTable users={users} />
-      <UserForm onSubmit={createUser} />
-    </div>
-  );
-}
-```
-
-## 🗄️ Schema Extendido
-
-Puedes extender el schema base para tus necesidades:
-
-```typescript
-import { extendNovaSchema } from '@nova/cms-admin';
-
-const miSchema = extendNovaSchema({
-  models: `
-    model Producto {
-      id    String @id @default(cuid())
-      name  String
-      price Float
-      planId String?
-      plan   Plan?  @relation(fields: [planId], references: [id])
-    }
-  `,
-  enums: `
-    enum ProductStatus {
-      AVAILABLE
-      OUT_OF_STOCK
-      DISCONTINUED
-    }
-  `
-});
-
-// Usar en tu schema.prisma
-```
-
-## 🚀 Ejemplos Completos
-
-### E-commerce con Admin
-```typescript
-// Configuración para tienda online
-const ecommerceConfig = {
-  features: { users: true, plans: false, products: true },
-  ui: { title: 'Admin E-commerce' }
-};
-```
-
-### Blog/CMS
-```typescript
-// Configuración para blog
-const blogConfig = {
-  features: { users: true, posts: true, comments: true },
-  ui: { title: 'Blog Admin' }
-};
-```
-
-### Sistema de Viajes
-```typescript
-// Configuración para agencia de viajes
-const travelConfig = {
-  features: { users: true, plans: true, bookings: true },
-  ui: { title: 'Travel Admin' }
-};
-```
-
-## 📚 API Reference
-
-### Hooks Principales
-
-#### `useNovaAuth()`
-```typescript
-const { 
-  user,           // Usuario actual
-  isAdmin,        // ¿Es admin?
-  login,          // Función de login
-  logout,         // Función de logout
-  loading         // Estado de carga
-} = useNovaAuth();
-```
-
-#### `useUsers()`
-```typescript
-const {
-  users,          // Lista de usuarios
-  loading,        // Estado de carga
-  createUser,     // Crear usuario
-  updateUser,     // Actualizar usuario
-  deleteUser,     // Eliminar usuario
-  refreshUsers    // Refrescar lista
-} = useUsers();
-```
-
-#### `usePlans()`
-```typescript
-const {
-  plans,          // Lista de planes
-  loading,        // Estado de carga
-  createPlan,     // Crear plan
-  updatePlan,     // Actualizar plan
-  deletePlan,     // Eliminar plan
-  refreshPlans    // Refrescar lista
-} = usePlans();
-```
-
-## 🔐 Seguridad
-
-CMS Nova incluye:
-
-- ✅ Autenticación con Better Auth
-- ✅ Verificación de roles por middleware
-- ✅ Validación de datos con Zod
-- ✅ Sanitización de inputs
-- ✅ Protección CSRF
-- ✅ Rate limiting (configurable)
-
-## 🤝 Contribuir
-
-1. Fork el proyecto
-2. Crea tu feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push al branch (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
-
-## 📄 Licencia
-
-MIT License - puedes usarlo en proyectos comerciales sin problemas.
-
-## 🙋‍♂️ Soporte
-
-- 📖 [Documentación completa](https://cms-nova-docs.vercel.app)
-- 💬 [Discord](https://discord.gg/cms-nova)
-- 🐛 [Issues](https://github.com/tuusuario/cms-nova/issues)
-- 📧 Email: soporte@cms-nova.com
-
----
-
-**¿Te gusta CMS Nova?** Dale una ⭐ en GitHub y compártelo con otros developers! 
-
-## Versión Mínima Funcional
-
-Esta versión incluye las funcionalidades básicas necesarias para comenzar:
-
-- Autenticación básica
-- Gestión de usuarios
-- Gestión de planes
-- UI minimalista
-
-### Configuración Rápida
-
-1. Instala las dependencias:
-```bash
-npm install
-```
-
-2. Configura las variables de entorno:
-```env
-NOVA_AUTH_SECRET=tu-clave-secreta
-DATABASE_URL=tu-url-de-base-de-datos
-```
-
-3. Importa y usa el componente principal:
-```tsx
-import { NovaAdminProvider } from '@nova/cms-admin';
-import { defaultConfig } from '@nova/cms-admin/config';
-
-function App() {
-  return (
-    <NovaAdminProvider config={defaultConfig}>
-      {/* Tu contenido aquí */}
-    </NovaAdminProvider>
-  );
-}
-```
-
-### Estructura Mínima
-
-```
-cms-nova/
-  ├── src/
-  │   ├── components/
-  │   │   ├── NovaAdminProvider.tsx
-  │   │   └── ui/
-  │   ├── contexts/
-  │   │   └── AuthContext.tsx
-  │   ├── types/
-  │   │   └── index.ts
-  │   └── config/
-  │       └── default-config.ts
-  └── examples/
-      └── minimal-setup.tsx
-```
-
-### Próximos Pasos
-
-1. Implementar componentes de usuarios
-2. Implementar componentes de planes
-3. Mejorar el sistema de autenticación
-4. Agregar más características según necesidad
-
-## Licencia
-
-MIT 
-
-# Nova CMS
-
-Nova CMS es un sistema de administración de contenido (CMS) modular y extensible construido con Next.js, Prisma, y `better-auth`.
-
-## Requisitos
-
-- Node.js (v18 o superior)
-- npm, pnpm, o yarn
-- Una base de datos PostgreSQL
-
-## Instalación
-
-1. **Clonar el repositorio:**
+1. **Set up environment:**
    ```bash
-   git clone <URL_DEL_REPOSITORIO>
-   cd <NOMBRE_DEL_DIRECTORIO>
+   # Create .env file
+   DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE"
+   BETTER_AUTH_SECRET="your-secret-key"
+   BETTER_AUTH_URL="http://localhost:3000"
    ```
 
-2. **Instalar dependencias:**
-   ```bash
-   npm install
-   ```
-
-3. **Configurar el entorno:**
-   - Crea un archivo `.env` en la raíz del proyecto.
-   - Añade tu URL de conexión a la base de datos PostgreSQL:
-     ```env
-     DATABASE_URL="postgresql://USUARIO:CONTRASEÑA@HOST:PUERTO/NOMBREDELABD"
-     ```
-
-4. **Sincronizar la base de datos:**
-   Este comando leerá tu `schema.prisma` y creará las tablas correspondientes en tu base de datos.
+2. **Sync database:**
    ```bash
    npx prisma db push
-   ```
-
-5. **Generar el cliente de Prisma:**
-   Aunque `db push` a veces lo hace automáticamente, es una buena práctica ejecutarlo explícitamente.
-   ```bash
    npx prisma generate
    ```
 
-6. **Iniciar el servidor de desarrollo:**
+3. **Start development server:**
    ```bash
    npm run dev
    ```
 
-## Primeros Pasos
+## 🚀 **Getting Started**
 
-Al iniciar la aplicación por primera vez, serás redirigido a la página `/signup`. Aquí podrás crear la primera cuenta de administrador.
+1. **First User:** Go to `/signup` to create the first administrator
+2. **Admin Panel:** Access `/admin/auth/SignIn` after registration
+3. **Setup:** Registration is automatically disabled after the first user
 
-Una vez que el primer usuario ha sido creado, la página de registro se desactiva automáticamente. Cualquier usuario adicional deberá ser creado desde el panel de administración por un usuario con los permisos adecuados.
+## 🎨 **Notion-Style Design**
 
-Para acceder al panel, ve a la ruta de inicio de sesión (normalmente `/admin/auth/SignIn`) después de que el primer usuario haya sido creado.
+CMS Nova uses a clean and modern design inspired by Notion, with a minimalist and functional interface.
 
----
+### ✨ **Design Features**
 
-## 🎨 **Diseño Estilo Notion**
+- **🎯 Clean Interface**: Minimalist and functional design
+- **📱 Responsive**: Adapted to all devices
+- **🎨 Modern Colors**: Professional color palette
+- **⚡ Smooth Animations**: Fluid and natural transitions
+- **📐 Consistent Spacing**: Well-structured grid system
 
-CMS Nova utiliza un diseño limpio y moderno inspirado en Notion, con interfaz minimalista y funcional.
+### ☁️ **AWS S3 File System**
 
-### ✨ **Características del Diseño**
+CMS Nova includes complete integration with Amazon S3 for file upload and management:
 
-- **🎯 Interfaz Limpia**: Diseño minimalista y funcional
-- **📱 Responsive**: Adaptado a todos los dispositivos
-- **🎨 Colores Modernos**: Paleta de colores profesional
-- **⚡ Animaciones Suaves**: Transiciones fluidas y naturales
-- **📐 Espaciado Consistente**: Grid system bien estructurado
+#### **S3 Features:**
+- **🔧 Panel Configuration**: No need to touch code
+- **🔒 Encrypted Credentials**: Secure storage in database
+- **📁 Folder Organization**: Files organized automatically
+- **🖼️ Multimedia Support**: Images, documents and more
+- **🌐 Public URLs**: Direct access to uploaded files
+- **⚡ Automatic Validation**: File types and sizes
 
-### 🧩 **Componentes Implementados**
+#### **How to Configure S3:**
+1. Go to **Admin Panel → Plugins** (`/admin/dashboard/plugins`)
+2. Search for **"Amazon S3 Storage"**
+3. Click **"Configure"**
+4. Enter your AWS credentials:
+   - **Bucket Name**: Your S3 bucket name
+   - **Region**: AWS region (e.g., us-east-1)
+   - **Access Key ID**: Your AWS access key
+   - **Secret Access Key**: Your AWS secret key
+5. **Activate the plugin** and you're done!
 
-#### Dashboard Principal
-- Cards con estadísticas en tiempo real
-- Sidebar navegable y colapsable
-- Header con información del usuario
+## 🛠️ **Tech Stack**
 
-#### Constructor Visual
-- Drag & drop para crear plantillas
-- Vista previa en tiempo real
-- Paleta de campos disponibles
+- **Frontend:** Next.js 14, React, TypeScript
+- **Backend:** Next.js API Routes, Prisma ORM
+- **Database:** PostgreSQL
+- **Auth:** Better Auth
+- **Styling:** Tailwind CSS
+- **File Upload:** AWS S3 Integration
 
-#### Gestión de Contenido
-- Tablas interactivas con filtros
-- Formularios dinámicos
-- Modales para edición rápida
+## 🔐 **Security**
 
-### 🎯 **Tecnologías de UI**
+CMS Nova includes:
 
-- **Tailwind CSS**: Framework de utilidades
-- **Radix UI**: Componentes accesibles
-- **Lucide Icons**: Iconografía moderna
-- **Framer Motion**: Animaciones fluidas
+- ✅ Authentication with Better Auth
+- ✅ Role verification by middleware
+- ✅ Data validation with Zod
+- ✅ Input sanitization
+- ✅ CSRF protection
+- ✅ Rate limiting (configurable)
 
----
+## 🤝 **Contributing**
 
-## 🌐 **Disponible en NPM**
+Contributions are welcome! Please:
 
-**Paquete:** [`@danielcadev/cms-nova`](https://www.npmjs.com/package/@danielcadev/cms-nova)
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Open a Pull Request
 
-```bash
-# Instalar versión beta
-npm install @danielcadev/cms-nova@beta
+## 📄 **License**
 
-# Ver todas las versiones
-npm view @danielcadev/cms-nova versions --json
-```
+MIT License - see [LICENSE](LICENSE) for more details.
 
----
-
-## 📚 **Documentación Completa**
-
-📖 **[Ver guía de creación de plantillas](docs/CREATE-TEMPLATES.md)**
-📖 **[Ver guía de integración](INTEGRATION.md)**
-📖 **[Ver guía de deployment](DEPLOYMENT.md)**
-📖 **[Ver demo del constructor visual](examples/template-builder-demo.md)**
-
----
-
-## 🤝 **Contribuir**
-
-¡Las contribuciones son bienvenidas! Por favor:
-
-1. Fork el repositorio
-2. Crea una rama para tu feature
-3. Commit tus cambios
-4. Push a la rama
-5. Abre un Pull Request
-
-## 📄 **Licencia**
-
-MIT License - ver [LICENSE](LICENSE) para más detalles.
-
-## 👨‍💻 **Autor**
+## 👨‍💻 **Author**
 
 **Daniel CA** - [@danielcadev](https://github.com/danielcadev)
 
 ---
 
-**¡Gracias por usar CMS Nova!** 🚀
+**Thank you for using CMS Nova!** 🚀

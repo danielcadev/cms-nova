@@ -1,7 +1,7 @@
 {
   "name": "@danielcadev/cms-nova",
-  "version": "1.0.0-beta.2",
-  "description": "Sistema de administración modular para gestión de contenido - Librería reutilizable",
+  "version": "1.0.0-beta.4",
+  "description": "Modern headless CMS with Notion-style design, visual template builder, and complete user management",
   "main": "src/index.ts",
   "types": "src/index.ts",
   "files": [
@@ -9,10 +9,12 @@
     "prisma",
     "dist",
     "README.md",
+    "LICENSE",
     "package.json",
     "next.config.mjs",
     "tailwind.config.js",
-    "tsconfig.json"
+    "tsconfig.json",
+    ".env.example"
   ],
   "scripts": {
     "build": "next build",
@@ -25,12 +27,20 @@
   },
   "keywords": [
     "cms",
-    "admin",
+    "headless-cms",
+    "admin-panel",
+    "content-management",
     "react",
     "nextjs",
     "typescript",
     "prisma",
-    "better-auth"
+    "better-auth",
+    "notion-style",
+    "visual-builder",
+    "template-builder",
+    "drag-drop",
+    "aws-s3",
+    "user-management"
   ],
   "author": "Daniel CA <tu-email@gmail.com> (https://github.com/danielcadev)",
   "license": "MIT",

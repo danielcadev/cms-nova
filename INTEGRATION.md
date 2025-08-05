@@ -21,6 +21,10 @@ npm install better-auth @prisma/client prisma react react-dom next
 DATABASE_URL="postgresql://..."
 BETTER_AUTH_SECRET="tu-clave-secreta"
 BETTER_AUTH_URL="https://tu-dominio.com"
+ENCRYPTION_KEY="clave-de-64-caracteres"
+
+# AWS S3 se configura desde el Panel de Plugins
+# No es necesario configurar aquí
 ```
 
 ## Integración Básica
@@ -233,7 +237,29 @@ POST   /api/plans
 PUT    /api/plans/[id]
 ```
 
-### Uso desde Frontend
+### Configuración de AWS S3
+
+### Configuración desde Panel de Plugins
+1. Ve a `/admin/dashboard/plugins`
+2. Busca "Amazon S3 Storage"
+3. Haz clic en "Configurar"
+4. Ingresa tus credenciales AWS:
+   - Bucket Name
+   - Region (ej: us-east-1)
+   - Access Key ID
+   - Secret Access Key
+5. Activa el plugin
+
+> **🔒 Seguridad**: Las credenciales se almacenan encriptadas en la base de datos, no en archivos de configuración.
+
+### Uso Automático
+Los campos de tipo "MEDIA" en plantillas dinámicas usarán S3 automáticamente:
+- Subida directa a S3
+- URLs públicas generadas
+- Validación de tipos de archivo
+- Organización por carpetas
+
+## Uso desde Frontend
 ```tsx
 // Obtener contenido para mostrar en tu sitio
 const response = await fetch('/api/content-entries?type=productos');
@@ -242,6 +268,18 @@ const productos = await response.json();
 // Obtener planes turísticos
 const planesResponse = await fetch('/api/plans');
 const planes = await planesResponse.json();
+
+// Subir archivo a S3 (si está configurado)
+const formData = new FormData();
+formData.append('file', file);
+formData.append('folder', 'productos');
+
+const uploadResponse = await fetch('/api/upload', {
+  method: 'POST',
+  body: formData
+});
+const uploadResult = await uploadResponse.json();
+// uploadResult.url contiene la URL pública del archivo
 ```
 
 ## Deployment
