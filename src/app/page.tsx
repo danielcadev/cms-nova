@@ -5,7 +5,7 @@ export default async function HomePage() {
   const userCount = await prisma.user.count();
 
   if (userCount === 0) {
-    redirect('/signup');
+    redirect('/admin/signup');
   } else {
     redirect('/admin/login');
   }
