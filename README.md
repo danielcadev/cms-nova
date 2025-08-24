@@ -6,7 +6,7 @@
 
 [![npm version](https://badge.fury.io/js/create-cms-nova.svg)](https://badge.fury.io/js/create-cms-nova)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js](https://img.shields.io/badge/Node.js-16%2B-green.svg)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
 
 *Build powerful content management systems with Next.js, Prisma, and Better Auth*
 
@@ -134,6 +134,59 @@ my-cms/
 ├── 🔧 src/lib/                # Utilities & configurations
 └── 📊 src/types/              # TypeScript definitions
 ```
+
+---
+
+## 🚀 Available Scripts (generated project)
+
+```bash
+# Development
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run start        # Start production server
+
+# Database
+npm run db:generate  # Generate Prisma client
+npm run db:push      # Push schema to database
+npm run db:migrate   # Run database migrations
+npm run db:studio    # Open Prisma Studio
+npm run db:seed      # Seed database with sample data
+
+# Code Quality
+npm run lint         # Run ESLint
+npm run type-check   # Run TypeScript checks
+```
+
+---
+
+## 🌐 Environment Variables (generated project)
+
+Create a `.env` file in the generated project root:
+
+```env
+# Database
+DATABASE_URL="postgresql://username:password@localhost:5432/cms_nova"
+
+# Authentication
+BETTER_AUTH_SECRET="your-secret-key"
+BETTER_AUTH_URL="http://localhost:3000"
+
+# AWS S3 (Optional)
+AWS_ACCESS_KEY_ID="your-access-key"
+AWS_SECRET_ACCESS_KEY="your-secret-key"
+AWS_REGION="us-east-1"
+AWS_S3_BUCKET="your-bucket-name"
+
+# Next.js
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+```
+
+---
+
+## 🧩 Additional Tech (template)
+
+- UI Components: Radix UI-based custom components
+- File Upload: AWS S3 integration
 
 ---
 

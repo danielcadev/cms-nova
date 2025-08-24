@@ -1,6 +1,6 @@
 {
   "name": "create-cms-nova",
-  "version": "3.2.0",
+  "version": "4.0.0",
   "description": "CLI to create CMS Nova projects - A complete headless CMS with Next.js, Prisma and Better Auth",
   "main": "create-cms-nova.js",
   "bin": {
@@ -30,7 +30,7 @@
   "author": "Daniel CA <tu-email@gmail.com> (https://github.com/danielcadev)",
   "license": "MIT",
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.0.0"
   },
   "repository": {
     "type": "git",
