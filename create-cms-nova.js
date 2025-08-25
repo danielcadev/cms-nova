@@ -164,34 +164,68 @@ function upgradeProject(opts) {
   // 8) Apply changes
   if (mode === 'paths') {
     const defaultPaths = [
+      // Config & meta
       '.github',
+      '.vscode',
       '.eslintrc.json',
+      'eslint.config.mjs',
       'tsconfig.json',
       'next.config.js',
+      'next.config.mjs',
       'tailwind.config.js',
       'postcss.config.js',
       '.env.example',
       'scripts',
-      'package.json'
+      'package.json',
+      // Admin/app code (common locations)
+      'app',
+      'src/app',
+      'src/admin',
+      'admin'
     ];
     const selectedPaths = customPaths && customPaths.length ? customPaths : defaultPaths;
 
-    if (dryRun) {
-      console.log('\n📝 Dry-run: mostrando diff contra plantilla');
+    // Filter only paths that exist in targetRef
+    const presentPaths = [];
+    const skippedPaths = [];
+    for (const p of selectedPaths) {
       try {
-        execSync(`git diff --name-status ${targetRef} -- ${selectedPaths.join(' ')}`, { stdio: 'inherit' });
+        execSync(`git cat-file -e ${targetRef}:${p}`, { stdio: 'ignore' }); // exists in ref
+        presentPaths.push(p);
+      } catch {
+        skippedPaths.push(p);
+      }
+    }
+
+    if (presentPaths.length === 0) {
+      console.log('\nℹ️ El ref de la plantilla no contiene ninguna de las rutas solicitadas.');
+      if (skippedPaths.length) console.log('   Rutas no encontradas en la plantilla:', skippedPaths.join(', '));
+      console.log('   Sugerencia: especifica rutas con --paths o verifica el tag/rama con --tag');
+      process.exit(1);
+    }
+
+    const quote = (s) => `"${s.replace(/"/g, '\\"')}"`;
+    const presentPathsQuoted = presentPaths.map(quote);
+
+    if (dryRun) {
+      console.log('\n📝 Dry-run: mostrando diff contra plantilla (solo rutas existentes)');
+      try {
+        execSync(`git diff --name-status ${targetRef} -- ${presentPathsQuoted.join(' ')}`, { stdio: 'inherit' });
       } catch {}
+      if (skippedPaths.length) console.log('\n⚠️ Rutas omitidas (no existen en la plantilla):', skippedPaths.join(', '));
       process.exit(0);
     }
 
-    console.log(`\n⬇️  Traiendo archivos desde ${targetRef} ...`);
+    console.log(`\n⬇️  Trayendo archivos desde ${targetRef} ...`);
     try {
-      execSync(`git checkout ${targetRef} -- ${selectedPaths.join(' ')}`, { stdio: 'inherit' });
+      execSync(`git checkout ${targetRef} -- ${presentPathsQuoted.join(' ')}`, { stdio: 'inherit' });
     } catch (e) {
       console.log('\n❌ Error trayendo archivos desde la plantilla.');
       console.log('   Verifica que el ref exista (rama o tag) y vuelve a intentar.');
       process.exit(1);
     }
+
+    if (skippedPaths.length) console.log('\n⚠️ Omitidas (no existen en la plantilla):', skippedPaths.join(', '));
 
     try {
       execSync('git commit -m "chore(upgrade): sync template files (paths mode)"', { stdio: 'inherit' });
