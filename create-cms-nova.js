@@ -3,6 +3,7 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const readline = require('readline');
 
 // --- Small args parser (no deps) ---
 function parseArgs(argv) {
@@ -86,7 +87,7 @@ function createProject(projectName) {
   }
 }
 
-function upgradeProject(opts) {
+async function upgradeProject(opts) {
   // opts: { mode, tag, dryRun, paths }
   const mode = opts.mode || 'paths';
   const dryRun = !!opts.dryRun;
@@ -177,7 +178,11 @@ function upgradeProject(opts) {
       '.env.example',
       'scripts',
       'package.json',
-      // Admin/app code (common locations)
+      // Project content
+      'public',
+      'prisma',
+      // Source code (sync all src + common admin/app locations)
+      'src',
       'app',
       'src/app',
       'src/admin',
@@ -216,24 +221,162 @@ function upgradeProject(opts) {
       process.exit(0);
     }
 
-    console.log(`\n⬇️  Trayendo archivos desde ${targetRef} ...`);
-    try {
-      execSync(`git checkout ${targetRef} -- ${presentPathsQuoted.join(' ')}`, { stdio: 'inherit' });
-    } catch (e) {
-      console.log('\n❌ Error trayendo archivos desde la plantilla.');
-      console.log('   Verifica que el ref exista (rama o tag) y vuelve a intentar.');
-      process.exit(1);
+    const interactive = opts.interactive !== false; // default true
+
+    if (!interactive) {
+      console.log(`\n⬇️  Trayendo archivos desde ${targetRef} ...`);
+      try {
+        execSync(`git checkout ${targetRef} -- ${presentPathsQuoted.join(' ')}`, { stdio: 'inherit' });
+      } catch (e) {
+        console.log('\n❌ Error trayendo archivos desde la plantilla.');
+        console.log('   Verifica que el ref exista (rama o tag) y vuelve a intentar.');
+        process.exit(1);
+      }
+
+      if (skippedPaths.length) console.log('\n⚠️ Omitidas (no existen en la plantilla):', skippedPaths.join(', '));
+
+      try {
+        execSync('git commit -m "chore(upgrade): sync template files (paths mode)"', { stdio: 'inherit' });
+      } catch {
+        console.log('\nℹ️ No hay cambios para commitear (ya estabas al día).');
+      }
+
+      console.log('\n✅ Upgrade completado (paths).');
+      console.log('🔧 Si cambió package.json, ejecuta: npm install');
+      return;
     }
+
+    // Modo interactivo por archivo
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    const ask = (q) => new Promise((resolve) => rl.question(q, (ans) => resolve(String(ans || '').trim().toLowerCase())));
+
+    console.log(`\n🧭 Analizando diferencias contra ${targetRef} ...`);
+    let diffRaw = '';
+    try {
+      diffRaw = execSync(`git diff --name-status ${targetRef} -- ${presentPathsQuoted.join(' ')}`).toString().trim();
+    } catch {
+      diffRaw = '';
+    }
+
+    if (!diffRaw) {
+      console.log('\nℹ️ No hay diferencias en las rutas seleccionadas. Ya estás al día.');
+      rl.close();
+      return;
+    }
+
+    const lines = diffRaw.split('\n').filter(Boolean);
+    let applyToRest = null; // 'k' | 't'
+    let anyChange = false;
+
+    for (const line of lines) {
+      // Parse: e.g., "M\tpath", "D\tpath", "A\tpath" or "R100\told\tnew"
+      const parts = line.split('\t');
+      let status = parts[0];
+      let file = parts[parts.length - 1]; // for R, this is the new name
+
+      // Skip if outside selected paths (safety)
+      if (!presentPaths.some((p) => file.startsWith(p))) continue;
+
+      // Check if file exists in template ref
+      let inTemplate = false;
+      try {
+        execSync(`git cat-file -e ${targetRef}:${file}`, { stdio: 'ignore' });
+        inTemplate = true;
+      } catch {}
+
+      const header = `\n📄 ${file}  [${status}]`;
+
+      // If user chose apply to rest previously
+      if (applyToRest === 'k') {
+        console.log(`${header} → mantener local (aplicar al resto)`);
+        continue;
+      }
+      if (applyToRest === 't') {
+        if (!inTemplate) {
+          console.log(`${header} → no existe en la plantilla, se mantiene local`);
+          continue;
+        }
+        try {
+          execSync(`git checkout ${targetRef} -- "${file}"`, { stdio: 'inherit' });
+          anyChange = true;
+        } catch {}
+        continue;
+      }
+
+      while (true) {
+        console.log(header);
+        const choices = inTemplate
+          ? '[K]eep local, [T]emplate, [D]iff, [P]atch interactivo, k![keep all], t![template all]'
+          : '[K]eep local, [D]iff, k![keep all]';
+        const ans = await ask(`   ¿Qué querés hacer? ${choices}: `);
+
+        if (ans === 'd') {
+          try {
+            execSync(`git diff ${targetRef} -- "${file}"`, { stdio: 'inherit' });
+          } catch {}
+          continue; // volver a preguntar
+        }
+
+        if (ans === 'p') {
+          if (!inTemplate) {
+            console.log('   ⚠️ No existe versión en plantilla para hacer patch.');
+            continue;
+          }
+          try {
+            // Modo interactivo de git para aplicar hunks
+            execSync(`git checkout -p ${targetRef} -- "${file}"`, { stdio: 'inherit' });
+            anyChange = true; // asume que pudo aplicar algo
+          } catch {}
+          break;
+        }
+
+        if (ans === 't' && inTemplate) {
+          try {
+            execSync(`git checkout ${targetRef} -- "${file}"`, { stdio: 'inherit' });
+            anyChange = true;
+          } catch {}
+          break;
+        }
+
+        if (ans === 'k') {
+          // mantener local
+          break;
+        }
+
+        if (ans === 'k!') {
+          applyToRest = 'k';
+          break;
+        }
+        if (ans === 't!' && inTemplate) {
+          applyToRest = 't';
+          try {
+            execSync(`git checkout ${targetRef} -- "${file}"`, { stdio: 'inherit' });
+            anyChange = true;
+          } catch {}
+          break;
+        }
+
+        console.log('   Opción no válida. Intenta de nuevo.');
+      }
+    }
+
+    rl.close();
 
     if (skippedPaths.length) console.log('\n⚠️ Omitidas (no existen en la plantilla):', skippedPaths.join(', '));
 
     try {
-      execSync('git commit -m "chore(upgrade): sync template files (paths mode)"', { stdio: 'inherit' });
+      execSync('git add -A', { stdio: 'inherit' });
+      execSync('git commit -m "chore(upgrade): interactive sync from template"', { stdio: 'inherit' });
+      console.log('\n✅ Upgrade completado (paths interactivo).');
     } catch {
-      console.log('\nℹ️ No hay cambios para commitear (ya estabas al día).');
+      if (anyChange) {
+        console.log('\nℹ️ Cambios realizados pero no se pudo crear el commit automáticamente.');
+        console.log('   Revisá el estado y commiteá manualmente: git add -A && git commit -m "upgrade"');
+      } else {
+        console.log('\nℹ️ No hay cambios para commitear (ya estabas al día).');
+      }
     }
 
-    console.log('\n✅ Upgrade completado (paths).');
     console.log('🔧 Si cambió package.json, ejecuta: npm install');
     return;
   }
@@ -278,10 +421,14 @@ if (subcmd === 'upgrade') {
     tag: args.tag || null,
     dryRun: !!args['dry-run'],
     backup: args.backup !== 'false' && args.backup !== false, // default true unless --backup false
+    interactive:
+      (args.interactive !== 'false' && args.interactive !== false) && args['no-interactive'] !== true,
     paths: args.paths ? String(args.paths).split(',').map(s => s.trim()).filter(Boolean) : null,
   };
-  upgradeProject(upgradeOpts);
-  process.exit(0);
+  (async () => {
+    await upgradeProject(upgradeOpts);
+    process.exit(0);
+  })();
 }
 
 // Default behavior: create project

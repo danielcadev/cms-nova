@@ -213,6 +213,72 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
 ---
 
+## 🔄 Upgrade Guide
+
+Keep your generated CMS project up to date with the template.
+
+### How it works
+- **Source**: Pulls from the template repository configured as `upstream` (defaults to `danielcadev/cms-nova-template`).
+- **Target ref**: Uses `upstream/main` by default. You can set another ref via `--tag` (branch, tag, or commit SHA).
+- **Backup**: Creates a backup Git tag automatically before applying changes.
+- **Clean tree**: Requires a clean working tree (commit or stash before upgrading).
+
+You can override the template repository by creating a `.cms-nova.json` in your project root:
+
+```json
+{
+  "templateRepo": "https://github.com/your-org/your-template.git"
+}
+```
+
+### Default behavior (paths mode)
+By default, the upgrade syncs only specific directories/files from the template to avoid overwriting local assets unintentionally. The default paths include:
+
+- **.github**, **.vscode**, **.eslintrc.json**, **eslint.config.mjs**, **tsconfig.json**
+- **next.config.js**, **next.config.mjs**, **tailwind.config.js**, **postcss.config.js**, **.env.example**
+- **scripts**, **package.json**
+- **public**, **prisma**
+- **src**, **app**, **src/app**, **src/admin**, **admin**
+
+### Basic commands
+- Preview changes:
+```bash
+npx create-cms-nova upgrade --dry-run
+```
+- Apply changes:
+```bash
+npx create-cms-nova upgrade
+```
+
+### Advanced usage
+- Specify a template ref (branch, tag, or SHA):
+```bash
+npx create-cms-nova upgrade --tag upstream/dev
+npx create-cms-nova upgrade --tag v4.0.5
+npx create-cms-nova upgrade --tag c12ddcfc63edbcb3ae6e125d81af22c29b726644
+```
+- Limit to custom paths:
+```bash
+npx create-cms-nova upgrade --paths "src/components/admin,docker,docs"
+```
+- Merge mode (pull all template history and resolve conflicts if any):
+```bash
+npx create-cms-nova upgrade --mode merge
+```
+
+### Recommended workflow
+1. **Commit your change to the template repository** (e.g., `cms-nova-template` on the desired branch).
+2. In your generated project, run the upgrade (optionally against the specific ref with `--tag`).
+3. Review and test the changes.
+
+> Tip: You can run the local script directly (useful when developing the CLI):
+```bash
+node create-cms-nova.js upgrade --dry-run
+node create-cms-nova.js upgrade
+```
+
+---
+
 ## 🤝 Community & Support
 
 <div align="center">
