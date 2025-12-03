@@ -108,24 +108,25 @@ async function upgradeProject(opts) {
   }
 
   // 2) Ensure clean working tree
-  try {
-    const status = execSync('git status --porcelain').toString().trim();
-    if (status) {
-      console.log('\n❌ Tu working tree tiene cambios sin commit.');
-      console.log('💡 Haz commit o stash antes de correr el upgrade.');
-      process.exit(1);
-    }
-  } catch {}
-
-  // 3) Determine template repo (from .cms-nova.json if exists)
-  let templateRepo = 'https://github.com/danielcadev/cms-nova-template.git';
-  const metaPath = path.join(process.cwd(), '.cms-nova.json');
-  if (fs.existsSync(metaPath)) {
+  if (!opts.allowDirty) {
     try {
-      const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
-      if (meta && meta.templateRepo) templateRepo = meta.templateRepo;
-    } catch {}
+      const status = execSync('git status --porcelain').toString().trim();
+      if (status) {
+        console.log('\n❌ Tu working tree tiene cambios sin commit.');
+        console.log('💡 Haz commit o stash antes de correr el upgrade.');
+        console.log('   O usa --allow-dirty para forzar (bajo tu propio riesgo).');
+        process.exit(1);
+      }
+    } catch { }
   }
+
+  // 3) Detect template repo URL from package.json or similar (optional)
+  let templateRepo = 'https://github.com/danielcadev/cms-nova-template.git';
+  const metaPath = path.join(process.cwd(), 'cms-nova.json'); // future proofing
+  try {
+    const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+    if (meta && meta.templateRepo) templateRepo = meta.templateRepo;
+  } catch { }
 
   // 4) Ensure remote upstream
   try {
@@ -159,7 +160,7 @@ async function upgradeProject(opts) {
     try {
       execSync(`git tag ${backupRef}`, { stdio: 'inherit' });
       console.log(`🏷️  Backup creado como tag: ${backupRef}`);
-    } catch {}
+    } catch { }
   }
 
   // 8) Apply changes
@@ -216,7 +217,7 @@ async function upgradeProject(opts) {
       console.log('\n📝 Dry-run: mostrando diff contra plantilla (solo rutas existentes)');
       try {
         execSync(`git diff --name-status ${targetRef} -- ${presentPathsQuoted.join(' ')}`, { stdio: 'inherit' });
-      } catch {}
+      } catch { }
       if (skippedPaths.length) console.log('\n⚠️ Rutas omitidas (no existen en la plantilla):', skippedPaths.join(', '));
       process.exit(0);
     }
@@ -282,7 +283,7 @@ async function upgradeProject(opts) {
       try {
         execSync(`git cat-file -e ${targetRef}:${file}`, { stdio: 'ignore' });
         inTemplate = true;
-      } catch {}
+      } catch { }
 
       const header = `\n📄 ${file}  [${status}]`;
 
@@ -299,7 +300,7 @@ async function upgradeProject(opts) {
         try {
           execSync(`git checkout ${targetRef} -- "${file}"`, { stdio: 'inherit' });
           anyChange = true;
-        } catch {}
+        } catch { }
         continue;
       }
 
@@ -313,7 +314,7 @@ async function upgradeProject(opts) {
         if (ans === 'd') {
           try {
             execSync(`git diff ${targetRef} -- "${file}"`, { stdio: 'inherit' });
-          } catch {}
+          } catch { }
           continue; // volver a preguntar
         }
 
@@ -326,7 +327,7 @@ async function upgradeProject(opts) {
             // Modo interactivo de git para aplicar hunks
             execSync(`git checkout -p ${targetRef} -- "${file}"`, { stdio: 'inherit' });
             anyChange = true; // asume que pudo aplicar algo
-          } catch {}
+          } catch { }
           break;
         }
 
@@ -334,7 +335,7 @@ async function upgradeProject(opts) {
           try {
             execSync(`git checkout ${targetRef} -- "${file}"`, { stdio: 'inherit' });
             anyChange = true;
-          } catch {}
+          } catch { }
           break;
         }
 
@@ -352,7 +353,7 @@ async function upgradeProject(opts) {
           try {
             execSync(`git checkout ${targetRef} -- "${file}"`, { stdio: 'inherit' });
             anyChange = true;
-          } catch {}
+          } catch { }
           break;
         }
 
@@ -387,20 +388,99 @@ async function upgradeProject(opts) {
       console.log('\n📝 Dry-run merge: mostrando resumen de commits pendientes');
       try {
         execSync(`git log --oneline --decorate --graph ..${targetRef}`, { stdio: 'inherit' });
-      } catch {}
+      } catch { }
       process.exit(0);
     }
 
     console.log(`\n🔀 Intentando merge desde ${targetRef} ...`);
     const allowFlag = '--allow-unrelated-histories';
+
+    // Setup interactive
+    const interactive = opts.interactive !== false;
+    let rl, ask;
+    if (interactive) {
+      rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+      ask = (q) => new Promise((resolve) => rl.question(q, (ans) => resolve(String(ans || '').trim().toLowerCase())));
+    }
+
     try {
       execSync(`git merge --no-commit --no-ff ${allowFlag} ${targetRef}`, { stdio: 'inherit' });
+      console.log('\n✅ Merge realizado (sin commit aún).');
+    } catch (e) {
+      console.log('\n⚠️  Merge con conflictos.');
+      if (interactive) {
+        const conflicts = execSync('git diff --name-only --diff-filter=U').toString().trim().split('\n').filter(Boolean);
+        if (conflicts.length > 0) {
+          console.log(`\n⚔️  Hay ${conflicts.length} archivos en conflicto.`);
+          for (const file of conflicts) {
+            console.log(`\n📄 Conflicto en: ${file}`);
+            while (true) {
+              const ans = await ask('   ¿Qué deseas hacer? [L]ocal (ours), [R]emoto (theirs), [M]anual, [S]altar: ');
+              if (ans === 'l') {
+                execSync(`git checkout --ours "${file}"`, { stdio: 'ignore' });
+                execSync(`git add "${file}"`, { stdio: 'ignore' });
+                console.log('   ✅ Conservado local.');
+                break;
+              } else if (ans === 'r') {
+                execSync(`git checkout --theirs "${file}"`, { stdio: 'ignore' });
+                execSync(`git add "${file}"`, { stdio: 'ignore' });
+                console.log('   ✅ Aceptado remoto.');
+                break;
+              } else if (ans === 'm') {
+                console.log('   ℹ️  Abre el archivo, resuelve y guarda. No hagas commit.');
+                await ask('   Presiona Enter cuando hayas resuelto el conflicto...');
+                execSync(`git add "${file}"`, { stdio: 'ignore' });
+                break;
+              } else if (ans === 's') {
+                console.log('   ⏩ Saltado.');
+                break;
+              }
+            }
+          }
+        }
+      } else {
+        console.log('   Resuélvelos manualmente y luego haz commit.');
+        process.exit(1);
+      }
+    }
+
+    // Optional review of staged changes
+    if (interactive) {
+      const staged = execSync('git diff --cached --name-only').toString().trim().split('\n').filter(Boolean);
+      if (staged.length > 0) {
+        console.log(`\n📝 Hay ${staged.length} archivos listos para commit (staged).`);
+        const doReview = await ask('   ¿Quieres revisar/decidir sobre estos archivos? [s/N]: ');
+        if (doReview === 's' || doReview === 'y') {
+          for (const file of staged) {
+            console.log(`\n📄 Modificado: ${file}`);
+            const ans = await ask('   ¿Acción? [K]eep change (mantener), [R]evert to local (descartar cambio), [S]kip: ');
+            if (ans === 'r') {
+              try {
+                execSync(`git restore --staged "${file}"`, { stdio: 'ignore' });
+                execSync(`git checkout HEAD -- "${file}"`, { stdio: 'ignore' }); // revert to HEAD
+                console.log('   ↩️  Restaurado a versión local.');
+              } catch {
+                console.log('   ❌ Error al restaurar.');
+              }
+            } else if (ans === 'k') {
+              console.log('   ✅ Mantenido.');
+            } else {
+              console.log('   ⏩ Saltado.');
+            }
+          }
+        }
+      }
+      rl.close();
+    }
+
+    try {
       execSync('git commit -m "chore(upgrade): merge template"', { stdio: 'inherit' });
       console.log('\n✅ Upgrade completado (merge).');
-    } catch (e) {
-      console.log('\n⚠️  Merge con conflictos. Resuélvelos y luego:');
-      console.log('   git add -A && git commit -m "chore(upgrade): resolve conflicts"');
+    } catch {
+      console.log('\nℹ️ No se pudo hacer commit automático (quizás no hay cambios o quedan conflictos).');
+      console.log('   Verifica el estado con: git status');
     }
+
     console.log('🔧 Si cambió package.json, ejecuta: npm install');
     return;
   }
@@ -417,37 +497,36 @@ const subcmd = args._[0];
 
 if (subcmd === 'upgrade') {
   const upgradeOpts = {
-    mode: args.mode || 'paths',
-    tag: args.tag || null,
-    dryRun: !!args['dry-run'],
-    backup: args.backup !== 'false' && args.backup !== false, // default true unless --backup false
-    interactive:
-      (args.interactive !== 'false' && args.interactive !== false) && args['no-interactive'] !== true,
-    paths: args.paths ? String(args.paths).split(',').map(s => s.trim()).filter(Boolean) : null,
+    tag: args.tag,
+    mode: args.mode,
+    dryRun: args['dry-run'],
+    paths: args.paths,
+    interactive: args.interactive,
+    allowDirty: !!args['allow-dirty'],
   };
   (async () => {
     await upgradeProject(upgradeOpts);
     process.exit(0);
   })();
-}
+} else {
+  // Default behavior: create project
+  const projectName = subcmd;
+  if (!projectName) {
+    console.log('\n❌ Please provide a project name or use a subcommand');
+    console.log('💡 Usage (create): npx create-cms-nova my-project');
+    console.log('💡 Usage (upgrade): npx create-cms-nova upgrade [--tag vX.Y.Z] [--mode merge|paths] [--dry-run] [--paths \'a,b\']');
+    console.log('📖 Example: npx create-cms-nova my-awesome-cms\n');
+    process.exit(1);
+  }
 
-// Default behavior: create project
-const projectName = subcmd;
-if (!projectName) {
-  console.log('\n❌ Please provide a project name or use a subcommand');
-  console.log('💡 Usage (create): npx create-cms-nova my-project');
-  console.log('💡 Usage (upgrade): npx create-cms-nova upgrade [--tag vX.Y.Z] [--mode merge|paths] [--dry-run] [--paths \'a,b\']');
-  console.log('📖 Example: npx create-cms-nova my-awesome-cms\n');
-  process.exit(1);
-}
+  // Guard: avoid creating a folder named "upgrade" by mistake
+  if (projectName === 'upgrade') {
+    console.log('\n❌ "upgrade" no es un nombre de proyecto válido.');
+    console.log('💡 Para actualizar un proyecto existente usa: npx create-cms-nova upgrade');
+    console.log('   Si ves este mensaje al usar npx, actualiza a la versión 4.0.1+ o ejecuta:');
+    console.log('   node "c:\\Users\\danie\\Desktop\\cms-nova\\create-cms-nova.js" upgrade');
+    process.exit(1);
+  }
 
-// Guard: avoid creating a folder named "upgrade" by mistake
-if (projectName === 'upgrade') {
-  console.log('\n❌ "upgrade" no es un nombre de proyecto válido.');
-  console.log('💡 Para actualizar un proyecto existente usa: npx create-cms-nova upgrade');
-  console.log('   Si ves este mensaje al usar npx, actualiza a la versión 4.0.1+ o ejecuta:');
-  console.log('   node "c:\\Users\\danie\\Desktop\\cms-nova\\create-cms-nova.js" upgrade');
-  process.exit(1);
+  createProject(projectName);
 }
-
-createProject(projectName);
