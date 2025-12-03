@@ -179,15 +179,23 @@ async function upgradeProject(opts) {
       '.env.example',
       'scripts',
       'package.json',
-      // Project content
-      'public',
+      'middleware.ts',
+      'src/middleware.ts',
+      // Project content (only core CMS parts)
       'prisma',
-      // Source code (sync all src + common admin/app locations)
-      'src',
-      'app',
-      'src/app',
+      // Source code (granular to avoid overwriting user app/public)
       'src/admin',
-      'admin'
+      'src/lib',
+      'src/types',
+      'src/utils',
+      'src/hooks',
+      'src/actions',
+      'src/schemas',
+      'src/components/admin',
+      'src/components/ui',
+      'src/app/api',
+      'src/app/admin',
+      // 'public' and rest of 'src/app' are EXCLUDED by default now
     ];
     const selectedPaths = customPaths && customPaths.length ? customPaths : defaultPaths;
 
