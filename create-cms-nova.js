@@ -191,8 +191,7 @@ async function upgradeProject(opts) {
       'src/hooks',
       'src/actions',
       'src/schemas',
-      'src/components/admin',
-      'src/components/ui',
+      'src/components',
       'src/app/api',
       'src/app/admin',
       // 'public' and rest of 'src/app' are EXCLUDED by default now
