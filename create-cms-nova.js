@@ -292,6 +292,9 @@ async function upgradeProject(opts) {
         inTemplate = true;
       } catch { }
 
+      // SKIP LOCAL-ONLY FILES
+      if (!inTemplate) continue;
+
       const header = `\n📄 ${file}  [${status}]`;
 
       // If user chose apply to rest previously
