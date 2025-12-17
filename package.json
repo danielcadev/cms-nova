@@ -4,7 +4,7 @@
   "description": "CLI to create CMS Nova projects - A complete headless CMS with Next.js, Prisma and Better Auth",
   "main": "create-cms-nova.js",
   "bin": {
-    "create-cms-nova": "./create-cms-nova.js"
+    "create-cms-nova": "create-cms-nova.js"
   },
   "files": [
     "create-cms-nova.js",
@@ -34,7 +34,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/danielcadev/cms-nova.git"
+    "url": "git+https://github.com/danielcadev/cms-nova.git"
   },
   "homepage": "https://github.com/danielcadev/cms-nova#readme",
   "bugs": {
