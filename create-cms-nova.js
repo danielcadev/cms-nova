@@ -433,6 +433,9 @@ async function upgradeProject(opts) {
     }
 
     console.log('🔧 Si cambió package.json, ejecuta: npm install');
+
+    // cleanup for deprecated files in paths mode too
+    await cleanupDeprecatedFiles(interactive, targetRef);
     return;
   }
 
