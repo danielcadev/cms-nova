@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
 
+// --- List of files that were removed from the template and should be cleaned up ---
 // --- Small args parser (no deps) ---
 function parseArgs(argv) {
   const args = {};
@@ -87,6 +88,41 @@ function createProject(projectName) {
   }
 }
 
+
+function checkForUpdates(currentVersion) {
+  try {
+    // Only check if we have internet and npm (silent fail)
+    const latestVersion = execSync('npm view create-cms-nova version', { stdio: 'pipe' }).toString().trim();
+
+    if (latestVersion && latestVersion !== currentVersion) {
+      const v1 = currentVersion.split('.').map(Number);
+      const v2 = latestVersion.split('.').map(Number);
+
+      let hasUpdate = false;
+      for (let i = 0; i < 3; i++) {
+        if (v2[i] > v1[i]) {
+          hasUpdate = true;
+          break;
+        }
+        if (v2[i] < v1[i]) break;
+      }
+
+      if (hasUpdate) {
+        console.log('\n╭─────────────────────────────────────────────────────────────────╮');
+        console.log('│                                                                 │');
+        console.log('│  ⚠️  UPDATE AVAILABLE: ' + currentVersion + ' → ' + latestVersion + '                            │');
+        console.log('│                                                                 │');
+        console.log('│  To get the latest features (like Garbage Collection), run:     │');
+        console.log('│  npx create-cms-nova@latest upgrade                             │');
+        console.log('│                                                                 │');
+        console.log('╰─────────────────────────────────────────────────────────────────╯\n');
+      }
+    }
+  } catch (e) {
+    // Ignore updates check failure
+  }
+}
+
 async function upgradeProject(opts) {
   // opts: { mode, tag, dryRun, paths }
   const mode = opts.mode || 'paths';
@@ -96,6 +132,14 @@ async function upgradeProject(opts) {
 
   console.log('\n🚀 CMS Nova upgrade');
   ensureGitAvailable();
+
+  // 0) Check for CLI updates
+  try {
+    const pkg = require('./package.json'); // Assumes package.json is in the same dir
+    checkForUpdates(pkg.version);
+  } catch (e) {
+    // Ignore if package.json not found or check fails
+  }
 
   // 1) Must be inside a git repo
   try {
@@ -492,6 +536,9 @@ async function upgradeProject(opts) {
     }
 
     console.log('🔧 Si cambió package.json, ejecuta: npm install');
+
+    // 9) Run cleanup for deprecated files
+    await cleanupDeprecatedFiles(interactive, targetRef);
     return;
   }
 
@@ -539,4 +586,121 @@ if (subcmd === 'upgrade') {
   }
 
   createProject(projectName);
+}
+
+// Helper to cleanup files that are no longer in the template (Dynamic Detection)
+async function cleanupDeprecatedFiles(interactive, targetRef = 'upstream/main') {
+  console.log('\n🧹 Buscando archivos obsoletos (basado en git diff)...');
+
+  // 1. Detect current version from package.json
+  let localVersion = '0.0.0';
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8'));
+    if (pkg.version) localVersion = pkg.version;
+  } catch {
+    console.log('   Warning: No se pudo leer package.json para determinar la versión base.');
+    return;
+  }
+
+  // 2. Try to find a git tag that matches this version
+  // Common tag formats: v1.0.0 or 1.0.0
+  const possibleTags = [`v${localVersion}`, localVersion];
+  let baseRef = null;
+
+  for (const t of possibleTags) {
+    try {
+      execSync(`git rev-parse --verify ${t}`, { stdio: 'ignore' });
+      // If local tag exists, use it. But better check upstream tags?
+      // The upgrade process fetched upstream tags.
+      // Let's assume tags are available locally after fetch.
+      baseRef = t;
+      break;
+    } catch {
+      // try remote ref directly if not fetched as local tag?
+      try {
+        execSync(`git rev-parse --verify upstream/${t}`, { stdio: 'ignore' });
+        // If it exists but failed local verify, maybe it's remote only?
+        // But 'git fetch upstream --tags' should have fetched it.
+        // Let's rely on standard refs.
+      } catch { }
+    }
+  }
+
+  // Fallback: search in remote tags listing if needed (optional)
+  if (!baseRef) {
+    try {
+      // Check if tag exists in 'git tag' output
+      const tags = execSync('git tag').toString().split('\n');
+      if (tags.includes(`v${localVersion}`)) baseRef = `v${localVersion}`;
+      else if (tags.includes(localVersion)) baseRef = localVersion;
+    } catch { }
+  }
+
+  if (!baseRef) {
+    console.log(`   ℹ️ No se encontró un tag git para la versión actual (${localVersion}).`);
+    console.log('   Skipping automatic cleanup detection (no base reference).');
+    return;
+  }
+
+  console.log(`   Versión base detectada para comparación: ${baseRef}`);
+
+  // 3. Compute diff between [baseRef] and [targetRef]
+  // We only care about Deleted files (D)
+  let diffOut = '';
+  try {
+    // --diff-filter=D selects only deleted files
+    // --name-only to just get paths
+    diffOut = execSync(`git diff --name-only --diff-filter=D ${baseRef} ${targetRef}`).toString().trim();
+  } catch (e) {
+    console.log('   Error calculando diferencias de git. Skipping cleanup.');
+    return;
+  }
+
+  if (!diffOut) {
+    console.log('✨ No se detectaron archivos eliminados entre versiones.');
+    return;
+  }
+
+  // 4. Filter list: check if they still exist locally
+  const candidateFiles = diffOut.split('\n').filter(Boolean).map(f => f.trim());
+
+  // We should also filter out files that the user might have intentionally kept?
+  // But strictly speaking, if it was in the template and removed from template, it's garbage.
+
+  const foundFiles = candidateFiles.filter(file => fs.existsSync(path.join(process.cwd(), file)));
+
+  if (foundFiles.length === 0) {
+    console.log('✨ Se detectaron cambios de estructura, pero tu proyecto ya está limpio.');
+    return;
+  }
+
+  console.log(`⚠️  Se encontraron ${foundFiles.length} archivos que fueron ELIMINADOS en la nueva versión:`);
+  foundFiles.forEach(f => console.log(`   - ${f}`));
+
+  if (!interactive) {
+    console.log('   (Modo no interactivo: saltando limpieza. Usa flags interactivos)');
+    return;
+  }
+
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  const ask = (q) => new Promise((resolve) => rl.question(q, (ans) => resolve(String(ans || '').trim().toLowerCase())));
+
+  const ans = await ask('\n¿Quieres eliminar estos archivos automáticamente? [Y]es/[N]o: ');
+
+  if (ans === 'y' || ans === 'yes') {
+    let deletedCount = 0;
+    for (const file of foundFiles) {
+      try {
+        fs.unlinkSync(path.join(process.cwd(), file));
+        deletedCount++;
+      } catch (e) {
+        console.log(`   ❌ Error borrando ${file}: ${e.message}`);
+      }
+    }
+    console.log(`\n✅ Se eliminaron ${deletedCount} archivos obsoletos.`);
+  } else {
+    console.log('\n⏩ Limpieza saltada.');
+  }
+
+  rl.close();
 }

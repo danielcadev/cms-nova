@@ -1,6 +1,6 @@
 {
   "name": "create-cms-nova",
-  "version": "5.0.4",
+  "version": "5.1.0",
   "description": "CLI to create CMS Nova projects - A complete headless CMS with Next.js, Prisma and Better Auth",
   "main": "create-cms-nova.js",
   "bin": {
