@@ -228,7 +228,7 @@ async function upgradeProject(opts) {
       // Project content (only core CMS parts)
       'prisma',
       // Source code (granular to avoid overwriting user app/public)
-      'src/admin',
+      'src/components/admin',
       'src/lib',
       'src/types',
       'src/utils',
