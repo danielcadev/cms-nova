@@ -606,41 +606,33 @@ async function cleanupDeprecatedFiles(interactive, targetRef = 'upstream/main') 
   }
 
   // 2. Try to find a git tag that matches this version
-  // Common tag formats: v1.0.0 or 1.0.0
   const possibleTags = [`v${localVersion}`, localVersion];
   let baseRef = null;
 
   for (const t of possibleTags) {
     try {
       execSync(`git rev-parse --verify ${t}`, { stdio: 'ignore' });
-      // If local tag exists, use it. But better check upstream tags?
-      // The upgrade process fetched upstream tags.
-      // Let's assume tags are available locally after fetch.
       baseRef = t;
       break;
-    } catch {
-      // try remote ref directly if not fetched as local tag?
-      try {
-        execSync(`git rev-parse --verify upstream/${t}`, { stdio: 'ignore' });
-        // If it exists but failed local verify, maybe it's remote only?
-        // But 'git fetch upstream --tags' should have fetched it.
-        // Let's rely on standard refs.
-      } catch { }
-    }
-  }
-
-  // Fallback: search in remote tags listing if needed (optional)
-  if (!baseRef) {
-    try {
-      // Check if tag exists in 'git tag' output
-      const tags = execSync('git tag').toString().split('\n');
-      if (tags.includes(`v${localVersion}`)) baseRef = `v${localVersion}`;
-      else if (tags.includes(localVersion)) baseRef = localVersion;
     } catch { }
   }
 
+  // 2b. Smart Detection: Use git merge-base if tags failed
   if (!baseRef) {
-    console.log(`\n   ℹ️ No se encontró un tag git para la versión actual (${localVersion}).`);
+    try {
+      console.log(`   ℹ️ No se encontró tag para v${localVersion}. Intentando detección inteligente (merge-base)...`);
+      const mergeBase = execSync(`git merge-base HEAD ${targetRef}`).toString().trim();
+      if (mergeBase) {
+        baseRef = mergeBase;
+        console.log(`   🎯 Ancestro común detectado: ${baseRef.substring(0, 7)}`);
+      }
+    } catch (e) {
+      // merge-base failed (unrelated histories?)
+    }
+  }
+
+  if (!baseRef) {
+    console.log(`\n   ℹ️ No se pudo detectar automáticamente la versión base.`);
 
     if (!interactive) {
       console.log('   Skipping automatic cleanup detection (no base reference).');
