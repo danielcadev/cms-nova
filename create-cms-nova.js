@@ -698,6 +698,34 @@ async function cleanupDeprecatedFiles(interactive, targetRef = 'upstream/main') 
       }
     }
     console.log(`\n✅ Se eliminaron ${deletedCount} archivos obsoletos.`);
+
+    // Cleaning up empty directories
+    console.log('\n🧹 Limpiando directorios vacíos...');
+    let cleanedDirs = 0;
+
+    // We get a unique list of parent directories from the deleted files
+    const dirsToCheck = [...new Set(foundFiles.map(f => path.dirname(path.join(process.cwd(), f))))];
+    // Sort them longest first (deepest first) to effectively remove nested empty dirs
+    dirsToCheck.sort((a, b) => b.length - a.length);
+
+    for (const d of dirsToCheck) {
+      removeEmptyDirs(d);
+    }
+
+    function removeEmptyDirs(dir) {
+      if (!fs.existsSync(dir)) return;
+      try {
+        const files = fs.readdirSync(dir);
+        if (files.length === 0) {
+          fs.rmdirSync(dir);
+          cleanedDirs++;
+          // Recursively check parent
+          removeEmptyDirs(path.dirname(dir));
+        }
+      } catch (e) {
+        // Ignore permission errors etc
+      }
+    }
   } else {
     console.log('\n⏩ Limpieza saltada.');
   }
