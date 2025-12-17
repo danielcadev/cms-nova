@@ -640,9 +640,26 @@ async function cleanupDeprecatedFiles(interactive, targetRef = 'upstream/main') 
   }
 
   if (!baseRef) {
-    console.log(`   ℹ️ No se encontró un tag git para la versión actual (${localVersion}).`);
-    console.log('   Skipping automatic cleanup detection (no base reference).');
-    return;
+    console.log(`\n   ℹ️ No se encontró un tag git para la versión actual (${localVersion}).`);
+
+    if (!interactive) {
+      console.log('   Skipping automatic cleanup detection (no base reference).');
+      return;
+    }
+
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    const ask = (q) => new Promise((resolve) => rl.question(q, (ans) => resolve(String(ans || '').trim())));
+
+    console.log('   La limpieza automática necesita saber contra qué versión comparar.');
+    console.log('   (Ejemplos: "v5.0.0", "upstream/main", o presiona Enter para saltar)');
+    const manualRef = await ask('   ¿Cuál es la versión/ref base de tu proyecto?: ');
+    rl.close();
+
+    if (!manualRef) {
+      console.log('   ⏩ Saltando detección de archivos obsoletos.');
+      return;
+    }
+    baseRef = manualRef;
   }
 
   console.log(`   Versión base detectada para comparación: ${baseRef}`);
