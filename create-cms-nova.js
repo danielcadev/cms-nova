@@ -734,8 +734,11 @@ async function cleanupDeprecatedFiles(interactive, targetRef = 'upstream/main') 
 
   // PHASE 2: Standalone Empty Directory Cleanup (Always offer this in interactive mode)
   if (interactive) {
+    const rl2 = readline.createInterface({ input: process.stdin, output: process.stdout });
+    const ask2 = (q) => new Promise((resolve) => rl2.question(q, (ans) => resolve(String(ans || '').trim())));
+
     console.log('\n🧹 Limpieza General de Carpetas');
-    const doScan = await ask('   ¿Quieres buscar y borrar carpetas vacías en "src/"? (y/N): ');
+    const doScan = await ask2('   ¿Quieres buscar y borrar carpetas vacías en "src/"? (y/N): ');
 
     if (['y', 'yes', 's', 'si'].includes(doScan.toLowerCase())) {
       let emptyDirsCount = 0;
@@ -770,7 +773,6 @@ async function cleanupDeprecatedFiles(interactive, targetRef = 'upstream/main') 
         console.log(`   ✅ Se eliminaron ${emptyDirsCount} carpetas vacías.`);
       }
     }
+    rl2.close();
   }
-
-  rl.close();
 }
