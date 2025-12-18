@@ -771,14 +771,6 @@ async function cleanupDeprecatedFiles(interactive, targetRef = 'upstream/main') 
       }
     }
 
-    // Explicit list of known legacy directories (Fail-safe for complex git histories)
-    const KNOWN_LEGACY_DIRS = [
-      'src/components/admin/dashboard/DashboardPage',
-      'src/components/admin/dashboard/PlanManager',
-      'src/components/admin/content/ContentEntriesPage',
-      'src/components/admin/content-types/ContentTypesManager'
-    ];
-
     if (potentialZombies.length > 0) {
       if (potentialZombies.length > 10) console.log(`\n🔎 Analizando ${potentialZombies.length} archivos locales extras para detectar obsolescencia...`);
 
@@ -803,19 +795,6 @@ async function cleanupDeprecatedFiles(interactive, targetRef = 'upstream/main') 
                 isZombie = true;
               }
             } catch (e) { }
-          }
-        }
-
-        // Check C: Known Legacy List (Fail-safe)
-        if (!isZombie) {
-          const fileNormalized = toGitPath(file);
-          for (const legacyDir of KNOWN_LEGACY_DIRS) {
-            // If the file is inside a known legacy directory
-            // We use simple string inclusion because KNOWN_LEGACY_DIRS are specific enough
-            if (fileNormalized.includes(legacyDir)) {
-              isZombie = true;
-              break;
-            }
           }
         }
 
