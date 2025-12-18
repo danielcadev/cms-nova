@@ -750,21 +750,52 @@ async function cleanupDeprecatedFiles(interactive, targetRef = 'upstream/main') 
     // 2. Filter: Only mark as Zombie if it *used to exist* in targetRef's history.
     let verifiedZombies = [];
 
+    // Helper to check if a directory path existed in history
+    const dirHistoryCache = new Map();
+    const checkDirHistory = (dirPath) => {
+      if (dirHistoryCache.has(dirPath)) return dirHistoryCache.get(dirPath);
+      if (dirPath === '.' || dirPath === '/' || dirPath === 'src' || dirPath === 'src/components') return false;
+
+      try {
+        const hasHist = execSync(`git rev-list -n 1 ${targetRef} -- "${dirPath}/"`).toString().trim();
+        dirHistoryCache.set(dirPath, !!hasHist);
+        return !!hasHist;
+      } catch (e) {
+        dirHistoryCache.set(dirPath, false);
+        return false;
+      }
+    }
+
     if (potentialZombies.length > 0) {
-      // Optimization/UX: Only show scanning message if list is big
       if (potentialZombies.length > 10) console.log(`\n🔎 Analizando ${potentialZombies.length} archivos locales extras para detectar obsolescencia...`);
 
       for (const file of potentialZombies) {
-        // "Did this file exist in the history of targetRef?"
-        // git rev-list -n 1 targetRef -- <file>
+        let isZombie = false;
+
+        // Check A: File exact match history
         try {
           const hasHistory = execSync(`git rev-list -n 1 ${targetRef} -- "${file}"`).toString().trim();
-          if (hasHistory) {
-            if (fs.existsSync(path.join(process.cwd(), file))) {
-              verifiedZombies.push(file);
-            }
-          }
+          if (hasHistory) isZombie = true;
         } catch (e) { }
+
+        // Check B: Parent Directory history (The "Orphaned Directory" Logic)
+        if (!isZombie) {
+          const parentDir = path.dirname(file);
+          if (checkDirHistory(parentDir)) {
+            try {
+              const existsInTarget = execSync(`git ls-tree -d ${targetRef} "${parentDir}"`).toString().trim();
+              if (!existsInTarget) {
+                isZombie = true;
+              }
+            } catch (e) { }
+          }
+        }
+
+        if (isZombie) {
+          if (fs.existsSync(path.join(process.cwd(), file))) {
+            verifiedZombies.push(file);
+          }
+        }
       }
     }
 
