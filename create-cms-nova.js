@@ -648,98 +648,88 @@ async function cleanupDeprecatedFiles(interactive, targetRef = 'upstream/main') 
     rl.close();
 
     if (!manualRef) {
-      console.log('   ⏩ Saltando detección de archivos obsoletos.');
-      return;
+      console.log('   ⏩ Saltando detección de archivos obsoletos (basada en git).');
+      baseRef = null; // Ensure baseRef is null so we skip the git logic block
+    } else {
+      baseRef = manualRef;
     }
-    baseRef = manualRef;
   }
 
-  console.log(`   Versión base detectada para comparación: ${baseRef}`);
+  if (baseRef) {
+    console.log(`   Versión base detectada para comparación: ${baseRef}`);
 
-  // 3. Compute diff between [baseRef] and [targetRef]
-  // We only care about Deleted files (D)
-  let diffOut = '';
-  try {
-    // --diff-filter=D selects only deleted files
-    // --name-only to just get paths
-    diffOut = execSync(`git diff --name-only --diff-filter=D ${baseRef} ${targetRef}`).toString().trim();
-  } catch (e) {
-    console.log('   Error calculando diferencias de git. Skipping cleanup.');
-    return;
-  }
-
-  if (!diffOut) {
-    console.log('✨ No se detectaron archivos eliminados entre versiones.');
-    return;
-  }
-
-  // 4. Filter list: check if they still exist locally
-  const candidateFiles = diffOut.split('\n').filter(Boolean).map(f => f.trim());
-
-  // We should also filter out files that the user might have intentionally kept?
-  // But strictly speaking, if it was in the template and removed from template, it's garbage.
-
-  const foundFiles = candidateFiles.filter(file => fs.existsSync(path.join(process.cwd(), file)));
-
-  if (foundFiles.length === 0) {
-    console.log('✨ Se detectaron cambios de estructura, pero tu proyecto ya está limpio.');
-    return;
-  }
-
-  console.log(`⚠️  Se encontraron ${foundFiles.length} archivos que fueron ELIMINADOS en la nueva versión:`);
-  foundFiles.forEach(f => console.log(`   - ${f}`));
-
-  if (!interactive) {
-    console.log('   (Modo no interactivo: saltando limpieza. Usa flags interactivos)');
-    return;
-  }
-
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-  const ask = (q) => new Promise((resolve) => rl.question(q, (ans) => resolve(String(ans || '').trim().toLowerCase())));
-
-  const ans = await ask('\n¿Quieres eliminar estos archivos automáticamente? [Y]es/[N]o: ');
-
-  if (ans === 'y' || ans === 'yes') {
-    let deletedCount = 0;
-    for (const file of foundFiles) {
-      try {
-        fs.unlinkSync(path.join(process.cwd(), file));
-        deletedCount++;
-      } catch (e) {
-        console.log(`   ❌ Error borrando ${file}: ${e.message}`);
-      }
-    }
-    console.log(`\n✅ Se eliminaron ${deletedCount} archivos obsoletos.`);
-
-    // Cleaning up empty directories
-    console.log('\n🧹 Limpiando directorios vacíos...');
-    let cleanedDirs = 0;
-
-    // We get a unique list of parent directories from the deleted files
-    const dirsToCheck = [...new Set(foundFiles.map(f => path.dirname(path.join(process.cwd(), f))))];
-    // Sort them longest first (deepest first) to effectively remove nested empty dirs
-    dirsToCheck.sort((a, b) => b.length - a.length);
-
-    for (const d of dirsToCheck) {
-      removeEmptyDirs(d);
+    // 3. Compute diff between [baseRef] and [targetRef]
+    // We only care about Deleted files (D)
+    let diffOut = '';
+    try {
+      // --diff-filter=D selects only deleted files
+      // --name-only to just get paths
+      diffOut = execSync(`git diff --name-only --diff-filter=D ${baseRef} ${targetRef}`).toString().trim();
+    } catch (e) {
+      console.log('   Error calculando diferencias de git. Skipping cleanup.');
     }
 
-    function removeEmptyDirs(dir) {
-      if (!fs.existsSync(dir)) return;
-      try {
-        const files = fs.readdirSync(dir);
-        if (files.length === 0) {
-          fs.rmdirSync(dir);
-          cleanedDirs++;
-          // Recursively check parent
-          removeEmptyDirs(path.dirname(dir));
+    if (diffOut) {
+      // 4. Filter list: check if they still exist locally
+      const candidateFiles = diffOut.split('\n').filter(Boolean).map(f => f.trim());
+      const foundFiles = candidateFiles.filter(file => fs.existsSync(path.join(process.cwd(), file)));
+
+      if (foundFiles.length > 0) {
+        console.log(`⚠️  Se encontraron ${foundFiles.length} archivos que fueron ELIMINADOS en la nueva versión:`);
+        foundFiles.forEach(f => console.log(`   - ${f}`));
+
+        if (interactive) {
+          const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+          const ask = (q) => new Promise((resolve) => rl.question(q, (ans) => resolve(String(ans || '').trim().toLowerCase())));
+
+          const ans = await ask('\n¿Quieres eliminar estos archivos automáticamente? [Y]es/[N]o: ');
+
+          if (ans === 'y' || ans === 'yes') {
+            let deletedCount = 0;
+            for (const file of foundFiles) {
+              try {
+                fs.unlinkSync(path.join(process.cwd(), file));
+                deletedCount++;
+              } catch (e) {
+                console.log(`   ❌ Error borrando ${file}: ${e.message}`);
+              }
+            }
+            console.log(`\n✅ Se eliminaron ${deletedCount} archivos obsoletos.`);
+
+            // Cleaning up empty directories
+            console.log('\n🧹 Limpiando directorios vacíos...');
+
+            // We get a unique list of parent directories from the deleted files
+            const dirsToCheck = [...new Set(foundFiles.map(f => path.dirname(path.join(process.cwd(), f))))];
+            // Sort them longest first (deepest first) to effectively remove nested empty dirs
+            dirsToCheck.sort((a, b) => b.length - a.length);
+
+            const removeEmptyDirs = (dir) => {
+              if (!fs.existsSync(dir)) return;
+              try {
+                const files = fs.readdirSync(dir);
+                if (files.length === 0) {
+                  fs.rmdirSync(dir);
+                  // Recursively check parent
+                  removeEmptyDirs(path.dirname(dir));
+                }
+              } catch (e) { }
+            }
+
+            for (const d of dirsToCheck) {
+              removeEmptyDirs(d);
+            }
+          } else {
+            console.log('\n⏩ Limpieza saltada.');
+          }
+          rl.close();
         }
-      } catch (e) {
-        // Ignore permission errors etc
+      } else {
+        console.log('✨ Se detectaron cambios de estructura, pero tu proyecto ya está limpio.');
       }
+    } else {
+      console.log('✨ No se detectaron archivos eliminados entre versiones.');
     }
-  } else {
-    console.log('\n⏩ Limpieza saltada.');
   }
 
   // PHASE 2: Standalone Empty Directory Cleanup (Always offer this in interactive mode)
