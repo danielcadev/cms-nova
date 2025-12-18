@@ -752,12 +752,17 @@ async function cleanupDeprecatedFiles(interactive, targetRef = 'upstream/main') 
 
     // Helper to check if a directory path existed in history
     const dirHistoryCache = new Map();
+    // Helper to ensure paths use forward slashes for git commands (crucial on Windows)
+    const toGitPath = (p) => p.split(path.sep).join('/');
+
     const checkDirHistory = (dirPath) => {
       if (dirHistoryCache.has(dirPath)) return dirHistoryCache.get(dirPath);
       if (dirPath === '.' || dirPath === '/' || dirPath === 'src' || dirPath === 'src/components') return false;
 
       try {
-        const hasHist = execSync(`git rev-list -n 1 ${targetRef} -- "${dirPath}/"`).toString().trim();
+        const gitDirPath = toGitPath(dirPath);
+        // Append trailing slash carefully for rev-list directory check
+        const hasHist = execSync(`git rev-list -n 1 ${targetRef} -- "${gitDirPath}/"`).toString().trim();
         dirHistoryCache.set(dirPath, !!hasHist);
         return !!hasHist;
       } catch (e) {
@@ -774,7 +779,8 @@ async function cleanupDeprecatedFiles(interactive, targetRef = 'upstream/main') 
 
         // Check A: File exact match history
         try {
-          const hasHistory = execSync(`git rev-list -n 1 ${targetRef} -- "${file}"`).toString().trim();
+          const gitFilePath = toGitPath(file);
+          const hasHistory = execSync(`git rev-list -n 1 ${targetRef} -- "${gitFilePath}"`).toString().trim();
           if (hasHistory) isZombie = true;
         } catch (e) { }
 
@@ -783,7 +789,8 @@ async function cleanupDeprecatedFiles(interactive, targetRef = 'upstream/main') 
           const parentDir = path.dirname(file);
           if (checkDirHistory(parentDir)) {
             try {
-              const existsInTarget = execSync(`git ls-tree -d ${targetRef} "${parentDir}"`).toString().trim();
+              const gitParentPath = toGitPath(parentDir);
+              const existsInTarget = execSync(`git ls-tree -d ${targetRef} "${gitParentPath}"`).toString().trim();
               if (!existsInTarget) {
                 isZombie = true;
               }
