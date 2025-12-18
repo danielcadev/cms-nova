@@ -742,5 +742,45 @@ async function cleanupDeprecatedFiles(interactive, targetRef = 'upstream/main') 
     console.log('\n⏩ Limpieza saltada.');
   }
 
+  // PHASE 2: Standalone Empty Directory Cleanup (Always offer this in interactive mode)
+  if (interactive) {
+    console.log('\n🧹 Limpieza General de Carpetas');
+    const doScan = await ask('   ¿Quieres buscar y borrar carpetas vacías en "src/"? (y/N): ');
+
+    if (['y', 'yes', 's', 'si'].includes(doScan.toLowerCase())) {
+      let emptyDirsCount = 0;
+      const cleanRecursive = (dir) => {
+        if (!fs.existsSync(dir)) return;
+        let files = [];
+        try { files = fs.readdirSync(dir); } catch (e) { return; }
+
+        if (files.length > 0) {
+          for (const file of files) {
+            const fullPath = path.join(dir, file);
+            if (fs.statSync(fullPath).isDirectory()) {
+              cleanRecursive(fullPath);
+            }
+          }
+          // Re-check after cleaning children
+          try { files = fs.readdirSync(dir); } catch (e) { return; }
+        }
+
+        if (files.length === 0) {
+          try {
+            fs.rmdirSync(dir);
+            emptyDirsCount++;
+            // console.log(`      Borrado: ${path.relative(process.cwd(), dir)}`);
+          } catch (e) { }
+        }
+      };
+
+      const srcPath = path.join(process.cwd(), 'src');
+      if (fs.existsSync(srcPath)) {
+        cleanRecursive(srcPath);
+        console.log(`   ✅ Se eliminaron ${emptyDirsCount} carpetas vacías.`);
+      }
+    }
+  }
+
   rl.close();
 }
