@@ -732,39 +732,60 @@ async function cleanupDeprecatedFiles(interactive, targetRef = 'upstream/main') 
     }
   }
 
-  // PHASE 2: Standalone Empty Directory Cleanup (Always offer this in interactive mode)
+  // PHASE 2: "Smart Zombie" Detection (Deep Scan)
+  // Search for files that exist LOCALLY but were deleted in the UPSTREAM history.
   if (interactive) {
     const rl2 = readline.createInterface({ input: process.stdin, output: process.stdout });
     const ask2 = (q) => new Promise((resolve) => rl2.question(q, (ans) => resolve(String(ans || '').trim())));
 
-    // PHASE 2: Check for Specific Legacy "Zombie" Directories
-    if (interactive) {
-      const KNOWN_LEGACY_DIRS = [
-        'src/components/admin/dashboard/DashboardPage',
-        'src/components/admin/dashboard/PlanManager',
-        'src/components/admin/content/ContentEntriesPage',
-        'src/components/admin/content-types/ContentTypesManager'
-      ];
+    // 1. Identify files local-only (present in HEAD, missing in targetRef/upstream)
+    // "git diff --name-only --diff-filter=A targetRef HEAD"
+    // Explanation: Compare targetRef -> HEAD. Added (A) in HEAD means it is in HEAD but not in targetRef.
+    let potentialZombies = [];
+    try {
+      const diffUnique = execSync(`git diff --name-only --diff-filter=A ${targetRef} HEAD`).toString().trim();
+      potentialZombies = diffUnique.split('\n').filter(Boolean).map(f => f.trim());
+    } catch (e) { }
 
-      const zombieDirs = KNOWN_LEGACY_DIRS.filter(d => fs.existsSync(path.join(process.cwd(), d)));
+    // 2. Filter: Only mark as Zombie if it *used to exist* in targetRef's history.
+    let verifiedZombies = [];
 
-      if (zombieDirs.length > 0) {
-        console.log(`\n🧟  Se detectaron ${zombieDirs.length} carpetas que son obsoletas en la nueva versión:`);
-        zombieDirs.forEach(d => console.log(`   - ${d}`));
+    if (potentialZombies.length > 0) {
+      // Optimization/UX: Only show scanning message if list is big
+      if (potentialZombies.length > 10) console.log(`\n🔎 Analizando ${potentialZombies.length} archivos locales extras para detectar obsolescencia...`);
 
-        const doZombie = await ask2('\n¿Quieres eliminar estas carpetas obsoletas? (Recomendado) (Y/n): ');
-        if (['y', 'yes', 's', 'si', ''].includes(doZombie.toLowerCase())) {
-          let zCount = 0;
-          for (const dir of zombieDirs) {
-            try {
-              fs.rmSync(path.join(process.cwd(), dir), { recursive: true, force: true });
-              zCount++;
-            } catch (e) {
-              console.log(`   ❌ Error borrando ${dir}: ${e.message}`);
+      for (const file of potentialZombies) {
+        // "Did this file exist in the history of targetRef?"
+        // git rev-list -n 1 targetRef -- <file>
+        try {
+          const hasHistory = execSync(`git rev-list -n 1 ${targetRef} -- "${file}"`).toString().trim();
+          if (hasHistory) {
+            if (fs.existsSync(path.join(process.cwd(), file))) {
+              verifiedZombies.push(file);
             }
           }
-          console.log(`   ✅ Eliminares ${zCount} carpetas obsoletas.`);
+        } catch (e) { }
+      }
+    }
+
+    if (verifiedZombies.length > 0) {
+      console.log(`\n🧟  Se detectaron ${verifiedZombies.length} archivos historiales "Zombis" (existían antes pero fueron eliminados):`);
+      // Show first 10
+      verifiedZombies.slice(0, 10).forEach(d => console.log(`   - ${d}`));
+      if (verifiedZombies.length > 10) console.log(`   ... y ${verifiedZombies.length - 10} más.`);
+
+      const doZombie = await ask2('\n¿Quieres eliminar estos archivos obsoletos? (Recomendado) (Y/n): ');
+      if (['y', 'yes', 's', 'si', ''].includes(doZombie.toLowerCase())) {
+        let zCount = 0;
+        for (const file of verifiedZombies) {
+          try {
+            fs.unlinkSync(path.join(process.cwd(), file));
+            zCount++;
+          } catch (e) {
+            console.log(`   ❌ Error borrando ${file}: ${e.message}`);
+          }
         }
+        console.log(`   ✅ Se eliminaron ${zCount} archivos zombis.`);
       }
     }
 
