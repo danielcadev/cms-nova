@@ -487,25 +487,47 @@ async function upgradeProject(opts) {
 
       if (!inTemplate) continue;
 
-      const header = `\n📄 ${color.bold(file)}  [${color.yellow(status)}]`;
+      // Check for local modifications (User changed it vs Base)
+      let isLocallyModified = false;
+      if (baseRef) {
+        try {
+          // If HEAD != baseRef, then user changed it.
+          const localDiff = execSync(`git diff --name-only ${baseRef} HEAD -- "${file}"`).toString().trim();
+          if (localDiff) isLocallyModified = true;
+        } catch { }
+      }
+
+      const statusColor = isLocallyModified ? color.red : color.yellow;
+      const header = `\n📄 ${color.bold(file)}  [${statusColor(status)}]`;
+
+      if (isLocallyModified) {
+        console.log(header);
+        console.log(color.warn(`   ⚠️  CONFLICT: You modified this file locally, and the template also updated it.`));
+        console.log(color.warn(`       Updating will OVERWRITE your changes.`));
+      } else if (applyToRest !== 't' && applyToRest !== 'k') {
+        // Normal header only if not conflict (or if we print it above)
+        console.log(header);
+      }
 
       if (applyToRest === 'k') {
-        console.log(`${header} ${color.dim('→ mantener local')}`);
+        if (!isLocallyModified) console.log(`${header} ${color.dim('→ mantener local')}`); // Don't spam header if conflict logic already showed it? Actually simpler to just print status.
+        else console.log(`${color.dim('   → Kept (global setting)')}`);
         continue;
       }
       if (applyToRest === 't') {
+        // Safety: If there is a CONFLICT, we might NOT want to auto-apply 'All Yes'?
+        // The user explicitly said "All Yes", so we honor it, but maybe log a warning?
         try {
           execSync(`git checkout ${targetRef} -- "${file}"`, { stdio: 'inherit' });
           anyChange = true;
-          console.log(`${header} ${color.green('→ actualizado')}`);
+          console.log(`${color.green('   → Updated (All Yes)')}`);
         } catch { }
         continue;
       }
 
       while (true) {
-        console.log(header);
-        // Better UX for choices
-        const choices = `${color.green('[Y]es (Update)')} / ${color.red('[N]o (Keep)')} / ${color.cyan('[D]iff')} / ${color.magenta('[A]ll Yes')} / ${color.dim('All [N]o')}`;
+        // If conflict, default option suggestion?
+        const choices = `${color.green('[Y]es')} / ${color.red('[N]o')} / ${color.cyan('[D]iff')}${isLocallyModified ? '' : ` / ${color.magenta('[A]ll Yes')}`}`;
         const ans = await ask(`   ❓ Action? ${choices}: `);
 
         if (ans === 'd') {
