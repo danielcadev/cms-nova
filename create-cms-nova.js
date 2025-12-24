@@ -30,6 +30,14 @@ const color = {
   bold: (msg) => `${style.bright}${msg}${style.reset}`,
   banner: (msg) => `${style.bgBlue}${style.bright} ${msg} ${style.reset}`,
   code: (msg) => `${style.dim}${msg}${style.reset}`,
+  // Direct colors
+  red: (msg) => `${style.red}${msg}${style.reset}`,
+  green: (msg) => `${style.green}${msg}${style.reset}`,
+  yellow: (msg) => `${style.yellow}${msg}${style.reset}`,
+  blue: (msg) => `${style.blue}${msg}${style.reset}`,
+  magenta: (msg) => `${style.magenta}${msg}${style.reset}`,
+  cyan: (msg) => `${style.cyan}${msg}${style.reset}`,
+  dim: (msg) => `${style.dim}${msg}${style.reset}`,
 };
 
 // --- List of files that were removed from the template and should be cleaned up ---
@@ -295,6 +303,7 @@ async function upgradeProject(opts) {
       'src/app/admin',
       'src/app/actions',
       'src/app/[typePath]',
+      'messages',
     ];
 
     // Always checked regardless of template changes (Critical Configs)
